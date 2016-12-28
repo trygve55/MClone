@@ -19,7 +19,10 @@ class Renderer extends GLCanvas implements GLEventListener {
 	private GLU glu;
 	FPSAnimator fPSAnimator;
 	private Map map;
+	KeyboardInput keyboardInput = new KeyboardInput(this);
 	
+	int deltaT;
+	long lastTime = System.nanoTime();
 	private float cameraX = 0, cameraY = 6, cameraZ = 15, cameraDirUp = 0, cameraDirSide = 0;
 	private double lastMouseX = MouseInfo.getPointerInfo().getLocation().getX(), lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
 	
@@ -27,7 +30,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	Renderer(Map map) {
 		this.addGLEventListener(this);
-		this.addKeyListener(new Input(this));
+		this.addKeyListener(keyboardInput);
 		this.map = map;
 	}
 	
@@ -71,11 +74,14 @@ class Renderer extends GLCanvas implements GLEventListener {
 		gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
 		gl.glLoadIdentity();
 		
-		//update look direction
-		updateLookDirection();	
+		this.deltaT = getDeltaT();
+		//System.out.println(deltaT);
 		
-		for (int chunkX = 0; chunkX < 1; chunkX++) {
-			for (int chunkY = 0; chunkY < 1; chunkY++) {
+		updateLookDirection();
+		moveCamera();
+		
+		for (int chunkX = 0; chunkX < map.getMapWidthChunks(); chunkX++) {
+			for (int chunkY = 0; chunkY < map.getMapHeightChunks(); chunkY++) {
 				for (short x = 0; x < 16; x++) {
 					for (short y = 0; y < 128; y++) {
 						for (short z = 0; z < 16; z++) {
@@ -88,17 +94,27 @@ class Renderer extends GLCanvas implements GLEventListener {
 					}
 					gl.glTranslatef(1.0f, -128.0f, 0.0f);
 				}
-				gl.glTranslatef(-16.0f, 0.0f, 0.0f);
+				gl.glTranslatef(-16.0f, 0.0f, 16.0f);
 			}
-		}		
+			//gl.glTranslatef(0.0f, 0.0f, 16.0f);
+			gl.glTranslatef(16.0f, 0.0f, -16.0f*map.getMapHeightChunks());
+		}	
+		
 	}
 	
 	public void dispose(GLAutoDrawable glDrawable) {
 		
 	}
 	
+	private int getDeltaT() {
+		long now = System.nanoTime();
+		long deltaT = (now-lastTime)/1000;
+		lastTime = now;
+		return (int) deltaT;
+	}
+	
 	private void updateLookDirection() {
-		float sence = 0.08f;
+		float sence = 0.1f;
 		
 		double mouseChangeX = MouseInfo.getPointerInfo().getLocation().getX() - lastMouseX;
 		double mouseChangeY = MouseInfo.getPointerInfo().getLocation().getY() - lastMouseY;
@@ -121,6 +137,47 @@ class Renderer extends GLCanvas implements GLEventListener {
 		glu.gluLookAt(cameraX, cameraY, cameraZ, cameraX + Math.sin(Math.toRadians(-cameraDirSide)), cameraY - Math.sin(Math.toRadians(cameraDirUp)), cameraZ + Math.cos(Math.toRadians(-cameraDirSide)), 0, 1, 0);	
 	}
 	
+	private void moveCamera() {
+		float speed = 0.04f;
+		
+		int forwardKey = KeyEvent.VK_W;
+		int backwardKey = KeyEvent.VK_S;
+		int leftKey = KeyEvent.VK_A;
+		int rightKey = KeyEvent.VK_D;
+		int upKey = KeyEvent.VK_SHIFT;
+		int downKey = KeyEvent.VK_CONTROL;
+		
+		if (keyboardInput.keyHold(forwardKey)) {
+			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide));
+			cameraY -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
+			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide));
+		}
+		
+		if (keyboardInput.keyHold(backwardKey)) {
+			cameraX -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide));
+			cameraY += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
+			cameraZ -= ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide));
+		}
+		
+		if (keyboardInput.keyHold(leftKey)) {
+			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide + 90));
+			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide + 90));
+		}
+		
+		if (keyboardInput.keyHold(rightKey)) {
+			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide - 90));
+			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide - 90));
+		}
+		
+		if (keyboardInput.keyHold(upKey)) {
+			cameraY += ((float) deltaT/16600.0f) * speed;
+		}
+		
+		if (keyboardInput.keyHold(downKey)) {
+			cameraY -= ((float) deltaT/16600.0f) * speed;
+		}
+	}
+	
 	private void drawBlock(GL2 gl, short type) {
 		float scale = 0.5f;
 		//drawBlock
@@ -136,9 +193,44 @@ class Renderer extends GLCanvas implements GLEventListener {
 			
 			default: 	break;
 		}
-		// gl.glColor3f(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
-		
+		//draw cube
 		gl.glBegin(GL2.GL_QUADS);
+			
+			//front
+			gl.glVertex3f(scale, scale, scale);
+			gl.glVertex3f(-scale, scale, scale);
+			gl.glVertex3f(-scale, -scale, scale);
+			gl.glVertex3f(scale, -scale, scale);
+			//left
+			gl.glVertex3f(scale, scale, -scale);
+			gl.glVertex3f(scale, scale, scale);
+			gl.glVertex3f(scale, -scale, scale);
+			gl.glVertex3f(scale, -scale, -scale);
+			//rigth
+			gl.glVertex3f(-scale, scale, scale);
+			gl.glVertex3f(-scale, scale, -scale);
+			gl.glVertex3f(-scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, scale);
+			//top
+			gl.glVertex3f(scale, scale, -scale);
+			gl.glVertex3f(-scale, scale, -scale);
+			gl.glVertex3f(-scale, scale, scale);
+			gl.glVertex3f(scale, scale, scale);
+			//botton
+			gl.glVertex3f(scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, scale);
+			gl.glVertex3f(scale, -scale, scale);
+			//back
+			gl.glVertex3f(-scale, scale, -scale);
+			gl.glVertex3f(scale, scale, -scale);
+			gl.glVertex3f(scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, -scale);
+		gl.glEnd();
+		
+		//draw outline
+		gl.glColor3f(0.0f, 0.0f, 0.0f);
+		gl.glBegin(GL2.GL_LINE_LOOP);
 			
 			//front
 			gl.glVertex3f(scale, scale, scale);
@@ -178,13 +270,27 @@ class Map {
 	private Chunk[][] chunks;
 	
 	public Map() {
-		chunks = new Chunk[1][1];
+		int genSize = 2;
 		
-		chunks[0][0] = new Chunk();
+		chunks = new Chunk[2][2];
+		
+		for (int chunkX = 0; chunkX < getMapWidthChunks(); chunkX++) {
+			for (int chunkY = 0; chunkY < getMapHeightChunks(); chunkY++) {
+				chunks[chunkX][chunkY] = new Chunk();
+			}
+		}	
 	}
 	
 	public Chunk getChunk(int chunkX, int chunkY) {
 		return chunks[chunkX][chunkY];
+	}
+	
+	public int getMapWidthChunks() {
+		return chunks.length;
+	}
+	
+	public int getMapHeightChunks() {
+		return chunks[0].length;
 	}
 }
 
@@ -210,25 +316,39 @@ class Chunk {
 	}
 }
 
-class Input extends KeyAdapter{
+class KeyboardInput extends KeyAdapter{
 	Renderer renderer;
 	
-	public Input(Renderer renderer) {
+	boolean[] isPressed = new boolean[255];
+	
+	public KeyboardInput(Renderer renderer) {
 		this.renderer = renderer;
 	}
 	
 	public void keyPressed(KeyEvent e) {
-		int keyCode = e.getKeyCode();  
-		switch(keyCode) {
-			case KeyEvent.VK_UP:	renderer.cameraMove(0.0f, 0.0f, 1.0f); break;
-			case KeyEvent.VK_DOWN:	renderer.cameraMove(0.0f, 0.0f, -1.0f); break;
-			case KeyEvent.VK_RIGHT:	renderer.cameraMove(1.0f, 0.0f, 0.0f); break;
-			case KeyEvent.VK_LEFT:	renderer.cameraMove(-1.0f, 0.0f, 0.0f); break;
-			case KeyEvent.VK_X:		renderer.cameraMove(0.0f, 1.0f, 0.0f); break;
-			case KeyEvent.VK_Z:		renderer.cameraMove(0.0f, -1.0f, 0.0f); break;
-		}
+		int keyCode = e.getKeyCode();
+		isPressed[keyCode] = true;
+		System.out.println(keyCode);
+		// switch(keyCode) {
+			// case KeyEvent.VK_UP:	renderer.cameraMove(0.0f, 0.0f, 1.0f); break;
+			// case KeyEvent.VK_DOWN:	renderer.cameraMove(0.0f, 0.0f, -1.0f); break;
+			// case KeyEvent.VK_RIGHT:	renderer.cameraMove(1.0f, 0.0f, 0.0f); break;
+			// case KeyEvent.VK_LEFT:	renderer.cameraMove(-1.0f, 0.0f, 0.0f); break;
+			// case KeyEvent.VK_X:		renderer.cameraMove(0.0f, 1.0f, 0.0f); break;
+			// case KeyEvent.VK_Z:		renderer.cameraMove(0.0f, -1.0f, 0.0f); break;
+		// }
 		//CarvansOpenGL.this.repaint();
-	}	
+		
+	}
+	
+	public void keyReleased(KeyEvent e) {
+		int keyCode = e.getKeyCode();
+		isPressed[keyCode] = false;
+	}
+	
+	public boolean keyHold(int keyCode) {
+		return isPressed[keyCode];
+	}
 }
 
 class Player {
@@ -237,7 +357,7 @@ class Player {
 
 class MClone {
 	public static void main(String[] args) {
-		String title = "SOL";
+		String title = "MClone";
 		int width = 1800, height = 1000;
 		
 		Map map = new Map();
