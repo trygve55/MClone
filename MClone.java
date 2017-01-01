@@ -18,8 +18,11 @@ import java.util.Random;
 class Renderer extends GLCanvas implements GLEventListener {
 	private GLU glu;
 	FPSAnimator fPSAnimator;
-	private LocalMap localMap;
-	KeyboardInput keyboardInput = new KeyboardInput(this);
+	public LocalMap localMap;
+	KeyboardInput keyboardInput = new KeyboardInput();
+	MouseInput mouseInput = new MouseInput();	
+	
+	Player player = new Player(0, 6, 0);
 	
 	boolean physics = true;
 	
@@ -29,7 +32,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	long lastTime = System.nanoTime();
 	private float cameraX = 0, cameraY = 6, cameraZ = 0, cameraDirUp = 0, cameraDirSide = 0;
-	private double lastMouseX = MouseInfo.getPointerInfo().getLocation().getX(), lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
+
 	
 	private short[] textures = new short[1];
 	
@@ -37,6 +40,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		this.addGLEventListener(this);
 		this.addKeyListener(keyboardInput);
 		this.localMap = localMap;
+		player.setMap(localMap);
 	}
 	
 	public void cameraSet(float x, float y, float z) {
@@ -81,8 +85,11 @@ class Renderer extends GLCanvas implements GLEventListener {
 		
 		this.deltaT = getDeltaT();
 		
-		updateLookDirection();
-		moveCamera();
+		processKeyboardInput(deltaT);
+		processMouseInput();
+		player.renderTick(deltaT);
+		updateCamera();
+		
 		draw3D(gl);
 		drawHUD(gl);
 		
@@ -135,33 +142,15 @@ class Renderer extends GLCanvas implements GLEventListener {
 		return (int) deltaT;
 	}
 	
-	private void updateLookDirection() {
-		float sence = 0.1f;
+	private void updateCamera() {
+		float[] camera = player.getEyePosition(); // {x, y, x, sideDir, upDir}
 		
-		double mouseChangeX = MouseInfo.getPointerInfo().getLocation().getX() - lastMouseX;
-		double mouseChangeY = MouseInfo.getPointerInfo().getLocation().getY() - lastMouseY;
-		
-		cameraDirUp += (float) mouseChangeY*sence;
-		cameraDirSide += (float) mouseChangeX*sence;
-		
-		if (cameraDirUp > 90.0f)  cameraDirUp = 90.0f;
-		if (cameraDirUp < -90.0f)  cameraDirUp = -90.0f;
-		
-		try {
-			Robot bot = new Robot();
-			bot.mouseMove(500, 500);
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		
-		lastMouseX = MouseInfo.getPointerInfo().getLocation().getX();
-		lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
-		
-		glu.gluLookAt(cameraX, cameraY, cameraZ, cameraX + Math.sin(Math.toRadians(-cameraDirSide)), cameraY + Math.sin(Math.toRadians(-cameraDirUp)), cameraZ + Math.cos(Math.toRadians(-cameraDirSide)), 0, 1, 0);	
+		glu.gluLookAt(camera[0], camera[1], camera[2], camera[0] + Math.sin(Math.toRadians(-camera[3])), camera[1] + Math.sin(Math.toRadians(-camera[4])), camera[2] + Math.cos(Math.toRadians(-camera[3])), 0, 1, 0);	
 	}
 	
-	private void moveCamera() {
+	private void processKeyboardInput(int deltaT) {
 		float speed = 0.09f;
+		float speedX = 0.0f, speedY = 0.0f, speedZ = 0.0f;
 		
 		int forwardKey = KeyEvent.VK_W;
 		int backwardKey = KeyEvent.VK_S;
@@ -174,51 +163,54 @@ class Renderer extends GLCanvas implements GLEventListener {
 		//input
 		
 		if (keyboardInput.keyHold(forwardKey)) {
-			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide));
-			if (physics == false) cameraY -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
-			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide));
+			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide));
+			if (physics == false) speedY -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
+			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide));
 		}
 		
 		if (keyboardInput.keyHold(backwardKey)) {
-			cameraX -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide));
-			if (physics == false) cameraY += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
-			cameraZ -= ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide));
+			speedX += -((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide));
+			if (physics == false) speedY += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
+			speedZ += -((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide));
 		}
 		
 		if (keyboardInput.keyHold(leftKey)) {
-			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide + 90));
-			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide + 90));
+			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide + 90));
+			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide + 90));
 		}
 		
 		if (keyboardInput.keyHold(rightKey)) {
-			cameraX += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(-cameraDirSide - 90));
-			cameraZ += ((float) deltaT/16600.0f) * speed * Math.cos(Math.toRadians(-cameraDirSide - 90));
+			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide - 90));
+			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide - 90));
 		}
 		
 		if (keyboardInput.keyHold(upKey)) {
-			cameraY += ((float) deltaT/16600.0f) * speed;
+			if (physics == false) speedY += ((float) deltaT/16600.0f) * speed;
 		}
 		
 		if (keyboardInput.keyHold(downKey)) {
-			cameraY -= ((float) deltaT/16600.0f) * speed;
+			if (physics == false) speedY -= ((float) deltaT/16600.0f) * speed;
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
-			cameraY += ((float) deltaT/16600.0f) * 0.3f;
+			if (player.isOnGround()) speedY = 0.2f;
 		}
 		
-		//physics
-		if(!isOnGround()) {
-			cameraY -= ((float) deltaT/16600.0f) * 0.2f;
-		}
+		player.setSpeed(speedX, speedY, speedZ);
 	}
-	
-	public boolean isOnGround() {
-		if (localMap.getBlock(Math.round(cameraX), Math.round(cameraY) - 2, Math.round(cameraZ)) != 0 ) {
-			return true;
-		} else {
-			return false;
-		}
+		
+	private void processMouseInput() {
+		float sence = 0.1f;
+		
+		double[] mouseChange = mouseInput.getMouseMovement();
+		
+		cameraDirUp += (float) mouseChange[1]*sence;
+		cameraDirSide += (float) mouseChange[0]*sence;
+		
+		if (cameraDirUp > 90.0f)  cameraDirUp = 90.0f;
+		if (cameraDirUp < -90.0f)  cameraDirUp = -90.0f;
+		
+		player.setLookDir(cameraDirSide, cameraDirUp);
 	}
 	
 	private void drawBlock(GL2 gl, int type) {
@@ -389,7 +381,7 @@ class LocalMap {
 	}
 	
 	public int getBlock(int blockX, int blockY, int blockZ) {
-		if (blockX >= getLocalMapSize()/2-1 || blockX <= getLocalMapSize()/2 || blockZ >= getLocalMapSize()/2-1 || blockZ <= getLocalMapSize()/2 || blockY >= 0 || blockY < getMapHeight()) {
+		if (blockX >= -getLocalMapSize()/2+1 || blockX <= getLocalMapSize()/2 || blockZ >= -getLocalMapSize()/2+1 || blockZ <= getLocalMapSize()/2 || blockY < 0 || blockY > getMapHeight() - 1) {
 		return blocks[getLocalMapSize()/2-1+blockX][blockY][getLocalMapSize()/2-1+blockZ];	
 		} else {
 		return 0;
@@ -411,12 +403,12 @@ class LocalMap {
 }
 
 class KeyboardInput extends KeyAdapter{
-	Renderer renderer;
+	//Renderer renderer;
 	
 	boolean[] isPressed = new boolean[255];
 	
-	public KeyboardInput(Renderer renderer) {
-		this.renderer = renderer;
+	public KeyboardInput() {
+		//this.renderer = renderer;
 	}
 	
 	public void keyPressed(KeyEvent e) {
@@ -434,28 +426,123 @@ class KeyboardInput extends KeyAdapter{
 	}
 }
 
+class MouseInput {
+	private double lastMouseX = MouseInfo.getPointerInfo().getLocation().getX(), lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
+	
+	public double[] getMouseMovement() {
+		double mouseChangeX = MouseInfo.getPointerInfo().getLocation().getX() - lastMouseX;
+		double mouseChangeY = MouseInfo.getPointerInfo().getLocation().getY() - lastMouseY;
+		
+		try {
+			Robot bot = new Robot();
+			bot.mouseMove(500, 500);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		
+		lastMouseX = MouseInfo.getPointerInfo().getLocation().getX();
+		lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
+		
+		return new double[] {mouseChangeX, mouseChangeY};
+	}
+}
+
 class Player {
 	
-	float x, y, z;
+	LocalMap localMap;
+	
+	boolean physics = true;
+	
+	float x, y, z, speedX, speedY, speedZ, lookDirSide, lookDirUp, friction, gravity;
 	
 	public Player(int x, int y, int z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.friction = 0.001f;
+		this.gravity = 0.1f;
 	}
 	
 	public float[] getPosition() {
 		return new float[] {x, y, z};
 	}
 	
+	public float[] getEyePosition() {
+		return new float[] {x, y + 2, z, lookDirSide, lookDirUp};
+	}
+	
+	public void renderTick(int deltaT) {
+		physics(deltaT);
+	}
+	
+	public void setMap(LocalMap localMap) {
+		this.localMap = localMap;
+	}
+	
+	public void physics(int deltaT) {
+		
+		x += this.speedX;
+		y += this.speedY;
+		z += this.speedZ;
+		
+		// System.out.println(isOnGround() + " " + x + " " + y + " " + z);
+		// System.out.println(speedX + " " + speedY + " " + speedZ);
+		
+		if (speedX == 0.0f || (speedX > 0.0f && speedX - friction < 0.0f) || (speedX < 0.0f && speedX - friction > 0.0f)) {
+			speedX = 0.0f;
+		} else if (speedX > 0.0f) {
+			speedX -= friction * ((float) deltaT/16600.0f);
+		} else {
+			speedX += friction * ((float) deltaT/16600.0f);
+		}
+		
+		if (!isOnGround()) speedY -= 0.0135f;
+		else speedY = 0;
+		
+		if (speedZ == 0 || (speedZ > 0 && speedZ - friction < 0) || (speedZ < 0 && speedZ - friction > 0)) speedZ = 0; 
+		else if (speedZ > 0) speedZ -= friction * ((float) deltaT/16600.0f);
+		else speedZ += friction * ((float) deltaT/16600.0f);
+		
+		this.speedX = speedX;
+		this.speedY = speedY;
+		this.speedZ = speedZ;
+	}
+	
+	public void setSpeed(float speedX, float speedY, float speedZ) {
+		this.speedX = speedX;
+		if (speedY == 0.2f) this.speedY = speedY;
+		this.speedZ = speedZ;
+	}
+	
+	public void setLookDir(float lookDirSide, float lookDirUp) {
+		this.lookDirSide = lookDirSide;
+		this.lookDirUp = lookDirUp;
+	}
+	
+	public void setSpeed(float speed, float moveDirSide) {
+		
+	}
+	
 	public void move(float deltaX, float deltaY, float deltaZ) {
 		
 	}
 	
-	public void moveTo(int x, int y, int z) {
+	public void setPos(int x, int y, int z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+	
+	public void setPos(int x, int y, int z, float lookDirSide, float lookDirUp) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.lookDirSide = lookDirSide;
+		this.lookDirUp = lookDirUp;
+	}	
+	
+	public boolean isOnGround() {
+		return (localMap.getBlock(Math.round(x), Math.round(y), Math.round(z)) != 0 );
 	}
 }
 
