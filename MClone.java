@@ -24,7 +24,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	Player player = new Player(0, 6, 0);
 	
-	boolean physics = true;
+	boolean physics = false;
 	
 	int deltaT;
 	
@@ -94,7 +94,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		drawHUD(gl);
 		
 		if (timer == 60) {
-			System.out.println("FPS: " + 1000000.0f/ (float) deltaT + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms");
+			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms");
 			timer = 0;
 		} else {
 			timer++;
@@ -120,7 +120,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		for (int x = -localMap.getLocalMapSize()/2+1; x < localMap.getLocalMapSize()/2; x++) {
 			for (int y = 0; y < localMap.getMapHeight(); y++) {
 				for (int z = -localMap.getLocalMapSize()/2+1; z < localMap.getLocalMapSize()/2; z++) {
-					if (localMap.getBlock(x, y, z) != 0) {
+					if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
 						drawBlock(gl, localMap.getBlock(x, y, z));
 					}
 					gl.glTranslatef(0.0f, 0.0f, 1.0f);
@@ -149,8 +149,11 @@ class Renderer extends GLCanvas implements GLEventListener {
 	}
 	
 	private void processKeyboardInput(int deltaT) {
-		float speed = 0.09f;
-		float speedX = 0.0f, speedY = 0.0f, speedZ = 0.0f;
+		
+		float[] speed = player.getSpeed();
+		
+		float moveSpeed = 0.09f;  //move speed
+		float speedX = speed[0], speedY = speed[1], speedZ = speed[2];
 		
 		int forwardKey = KeyEvent.VK_W;
 		int backwardKey = KeyEvent.VK_S;
@@ -163,33 +166,33 @@ class Renderer extends GLCanvas implements GLEventListener {
 		//input
 		
 		if (keyboardInput.keyHold(forwardKey)) {
-			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide));
-			if (physics == false) speedY -= ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
-			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide));
+			speedX += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.sin(Math.toRadians(-cameraDirSide));
+			if (physics == false) speedY -= ((float) deltaT/16600.0f) * moveSpeed * Math.sin(Math.toRadians(cameraDirUp));
+			speedZ += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.cos(Math.toRadians(-cameraDirSide));
 		}
 		
 		if (keyboardInput.keyHold(backwardKey)) {
-			speedX += -((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide));
-			if (physics == false) speedY += ((float) deltaT/16600.0f) * speed * Math.sin(Math.toRadians(cameraDirUp));
-			speedZ += -((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide));
+			speedX += -((float) deltaT/16600.0f) * moveSpeed * (float) Math.sin(Math.toRadians(-cameraDirSide));
+			if (physics == false) speedY += ((float) deltaT/16600.0f) * moveSpeed * Math.sin(Math.toRadians(cameraDirUp));
+			speedZ += -((float) deltaT/16600.0f) * moveSpeed * (float) Math.cos(Math.toRadians(-cameraDirSide));
 		}
 		
 		if (keyboardInput.keyHold(leftKey)) {
-			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide + 90));
-			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide + 90));
+			speedX += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.sin(Math.toRadians(-cameraDirSide + 90));
+			speedZ += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.cos(Math.toRadians(-cameraDirSide + 90));
 		}
 		
 		if (keyboardInput.keyHold(rightKey)) {
-			speedX += ((float) deltaT/16600.0f) * speed * (float) Math.sin(Math.toRadians(-cameraDirSide - 90));
-			speedZ += ((float) deltaT/16600.0f) * speed * (float) Math.cos(Math.toRadians(-cameraDirSide - 90));
+			speedX += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.sin(Math.toRadians(-cameraDirSide - 90));
+			speedZ += ((float) deltaT/16600.0f) * moveSpeed * (float) Math.cos(Math.toRadians(-cameraDirSide - 90));
 		}
 		
 		if (keyboardInput.keyHold(upKey)) {
-			if (physics == false) speedY += ((float) deltaT/16600.0f) * speed;
+			if (physics == false) speedY += ((float) deltaT/16600.0f) * moveSpeed;
 		}
 		
 		if (keyboardInput.keyHold(downKey)) {
-			if (physics == false) speedY -= ((float) deltaT/16600.0f) * speed;
+			if (physics == false) speedY -= ((float) deltaT/16600.0f) * moveSpeed;
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
@@ -295,6 +298,14 @@ class Renderer extends GLCanvas implements GLEventListener {
 			gl.glVertex3f(-scale, -scale, scale);
 		gl.glEnd();
 	}
+	
+	public void setPhysics(boolean physics) {
+		this.physics = physics;
+	}
+	
+	public boolean getPhysics() {
+		return physics;
+	}
 }
 
 class Map {
@@ -370,21 +381,16 @@ class LocalMap {
 			}
 		}
 		setBlock(5, 3, 4, 2);
-		setBlock(-2, 3, -3, 4);
-		setBlock(-2, 4, -3, 4);
-		setBlock(-2, 5, -3, 4);
-		setBlock(-3, 5, -3, 5);
-		setBlock(-1, 5, -3, 5);
-		setBlock(-2, 5, -2, 5);
-		setBlock(-2, 5, -4, 5);
-		setBlock(-2, 6, -3, 5);
+		
+		spawnTree( -2, 3, -3);
+		spawnTree( 5, 3, -8);
 	}
 	
 	public int getBlock(int blockX, int blockY, int blockZ) {
-		if (blockX >= -getLocalMapSize()/2+1 || blockX <= getLocalMapSize()/2 || blockZ >= -getLocalMapSize()/2+1 || blockZ <= getLocalMapSize()/2 || blockY < 0 || blockY > getMapHeight() - 1) {
-		return blocks[getLocalMapSize()/2-1+blockX][blockY][getLocalMapSize()/2-1+blockZ];	
+		if (blockX >= -getLocalMapSize()/2+1 && blockX <= getLocalMapSize()/2 && blockZ >= -getLocalMapSize()/2+1 && blockZ <= getLocalMapSize()/2 && blockY >=	 0 && blockY < getMapHeight() - 1) {
+			return blocks[getLocalMapSize()/2-1+blockX][blockY][getLocalMapSize()/2-1+blockZ];	
 		} else {
-		return 0;
+			return 0;
 		}
 	}
 	
@@ -399,6 +405,17 @@ class LocalMap {
 	
 	public int getMapHeight() {
 		return blocks[0][0].length;
+	}
+	
+	public void spawnTree(int x, int y, int z) {
+		setBlock(x, y, z, 4);
+		setBlock(x, y + 1, z, 4);
+		setBlock(x, y + 2, z, 4);
+		setBlock(x - 1, y + 2, z, 5);
+		setBlock(x + 1, y + 2, z, 5);
+		setBlock(x, y + 2, z + 1, 5);
+		setBlock(x, y + 2, z - 1, 5);
+		setBlock(x, y + 3, z, 5);
 	}
 }
 
@@ -451,7 +468,7 @@ class Player {
 	
 	LocalMap localMap;
 	
-	boolean physics = true;
+	boolean physics = false;
 	
 	float x, y, z, speedX, speedY, speedZ, lookDirSide, lookDirUp, friction, gravity;
 	
@@ -459,7 +476,7 @@ class Player {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.friction = 0.001f;
+		this.friction = 0.08f;
 		this.gravity = 0.1f;
 	}
 	
@@ -488,16 +505,17 @@ class Player {
 		// System.out.println(isOnGround() + " " + x + " " + y + " " + z);
 		// System.out.println(speedX + " " + speedY + " " + speedZ);
 		
-		if (speedX == 0.0f || (speedX > 0.0f && speedX - friction < 0.0f) || (speedX < 0.0f && speedX - friction > 0.0f)) {
-			speedX = 0.0f;
-		} else if (speedX > 0.0f) {
-			speedX -= friction * ((float) deltaT/16600.0f);
+		if (speedX == 0.0f || (speedX > 0.0f && speedX - friction < 0.0f) || (speedX < 0.0f && speedX - friction > 0.0f)) speedX = 0.0f;
+		else if (speedX > 0.0f) speedX -= friction * ((float) deltaT/16600.0f);
+		else speedX += friction * ((float) deltaT/16600.0f);
+
+		if (physics == true) {
+			if (!isOnGround()) speedY -= 0.0135f; else speedY = 0;
 		} else {
-			speedX += friction * ((float) deltaT/16600.0f);
+			if (speedY == 0 || (speedY > 0 && speedY - friction < 0) || (speedY < 0 && speedY - friction > 0)) speedY = 0; 
+			else if (speedY > 0) speedY -= friction * ((float) deltaT/16600.0f);
+			else speedY += friction * ((float) deltaT/16600.0f);
 		}
-		
-		if (!isOnGround()) speedY -= 0.0135f;
-		else speedY = 0;
 		
 		if (speedZ == 0 || (speedZ > 0 && speedZ - friction < 0) || (speedZ < 0 && speedZ - friction > 0)) speedZ = 0; 
 		else if (speedZ > 0) speedZ -= friction * ((float) deltaT/16600.0f);
@@ -510,8 +528,13 @@ class Player {
 	
 	public void setSpeed(float speedX, float speedY, float speedZ) {
 		this.speedX = speedX;
-		if (speedY == 0.2f) this.speedY = speedY;
+		//if (speedY == 0.2f) 
+		this.speedY = speedY;
 		this.speedZ = speedZ;
+	}
+	
+	public float[] getSpeed() {
+		return new float[] {speedX, speedY, speedZ};
 	}
 	
 	public void setLookDir(float lookDirSide, float lookDirUp) {
@@ -551,7 +574,7 @@ class MClone {
 		String title = "MClone";
 		int width = 1800, height = 1000;
 		
-		LocalMap map = new LocalMap(32, 64);
+		LocalMap map = new LocalMap(48, 64);
 		
 		GLCanvas canvans = new Renderer(map);
 		canvans.setPreferredSize(new Dimension(width, height));
