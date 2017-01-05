@@ -24,7 +24,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	Player player = new Player(0, 6, 0);
 	
-	boolean physics = false;
+	boolean physics = true;
 	
 	int deltaT;
 	
@@ -94,7 +94,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		drawHUD(gl);
 		
 		if (timer == 60) {
-			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms");
+			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms   x: " + cameraX + " y: " + cameraY + " z: " + cameraZ);
 			timer = 0;
 		} else {
 			timer++;
@@ -115,14 +115,18 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	private void drawLocalMap(GL2 gl) {
 		
-		gl.glTranslatef((float) -localMap.getLocalMapSize()/2, 0.0f, -localMap.getLocalMapSize()/2);
+		gl.glTranslatef((float) -localMap.getLocalMapSize()/2 + 1, 0.0f, -localMap.getLocalMapSize()/2 + 1);
 		
 		for (int x = -localMap.getLocalMapSize()/2+1; x < localMap.getLocalMapSize()/2; x++) {
 			for (int y = 0; y < localMap.getMapHeight(); y++) {
 				for (int z = -localMap.getLocalMapSize()/2+1; z < localMap.getLocalMapSize()/2; z++) {
+					// if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
+						// drawBlock(gl, localMap.getBlock(x, y, z));
+					// }
 					if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
-						drawBlock(gl, localMap.getBlock(x, y, z));
+						drawBlock(gl, localMap.getBlock(x, y, z), (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), (cameraY > y && localMap.getBlock(x, y + 1, z) == 0), (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
 					}
+					
 					gl.glTranslatef(0.0f, 0.0f, 1.0f);
 				}
 				gl.glTranslatef(0.0f, 1.0f, -localMap.getLocalMapSize()+1);
@@ -144,6 +148,9 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	private void updateCamera() {
 		float[] camera = player.getEyePosition(); // {x, y, x, sideDir, upDir}
+		cameraX = camera[0];
+		cameraY = camera[1];
+		cameraZ = camera[2];
 		
 		glu.gluLookAt(camera[0], camera[1], camera[2], camera[0] + Math.sin(Math.toRadians(-camera[3])), camera[1] + Math.sin(Math.toRadians(-camera[4])), camera[2] + Math.cos(Math.toRadians(-camera[3])), 0, 1, 0);	
 	}
@@ -153,7 +160,8 @@ class Renderer extends GLCanvas implements GLEventListener {
 		float[] speed = player.getSpeed();
 		
 		float moveSpeed = 0.09f;  //move speed
-		float speedX = speed[0], speedY = speed[1], speedZ = speed[2];
+		// float speedX = speed[0], speedY = speed[1], speedZ = speed[2];
+		float speedX = 0.0f, speedY = speed[1], speedZ = 0.0f;
 		
 		int forwardKey = KeyEvent.VK_W;
 		int backwardKey = KeyEvent.VK_S;
@@ -196,7 +204,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
-			if (player.isOnGround()) speedY = 0.2f;
+			if (player.isOnGround()) speedY = 0.18f;
 		}
 		
 		player.setSpeed(speedX, speedY, speedZ);
@@ -268,6 +276,101 @@ class Renderer extends GLCanvas implements GLEventListener {
 			gl.glVertex3f(scale, scale, -scale);
 			gl.glVertex3f(scale, -scale, -scale);
 			gl.glVertex3f(-scale, -scale, -scale);
+		gl.glEnd();
+		
+		//draw outline
+		gl.glColor3f(0.0f, 0.0f, 0.0f);
+		//front
+		gl.glBegin(GL2.GL_LINE_LOOP);
+			gl.glVertex3f(scale, scale, scale);
+			gl.glVertex3f(-scale, scale, scale);
+			gl.glVertex3f(-scale, -scale, scale);
+			gl.glVertex3f(scale, -scale, scale);
+		gl.glEnd();
+		//back
+		gl.glBegin(GL2.GL_LINE_LOOP);
+			gl.glVertex3f(-scale, scale, -scale);
+			gl.glVertex3f(scale, scale, -scale);
+			gl.glVertex3f(scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, -scale);
+		gl.glEnd();
+		//sides
+		gl.glBegin(GL2.GL_LINES);
+			gl.glVertex3f(-scale, scale, -scale);
+			gl.glVertex3f(-scale, scale, scale);
+			gl.glVertex3f(scale, scale, -scale);
+			gl.glVertex3f(scale, scale, scale);
+			gl.glVertex3f(scale, -scale, -scale);
+			gl.glVertex3f(scale, -scale, scale);
+			gl.glVertex3f(-scale, -scale, -scale);
+			gl.glVertex3f(-scale, -scale, scale);
+		gl.glEnd();
+	}
+	
+	private void drawBlock(GL2 gl, int type, boolean drawPositiveX, boolean drawNegativeX, boolean drawPositiveY, boolean drawNegativeY, boolean drawPositiveZ, boolean drawNegativeZ) {
+		float scale = 0.5f;
+		//drawBlock
+		Random rand = new Random();
+		
+		//select color
+		switch (type) {
+			case 1:		gl.glColor3f(0.1f, 0.7f, 0.0f);	break;
+			
+			case 2:		gl.glColor3f(0.5f, 0.5f, 0.5f);	break;
+			
+			case 3:		gl.glColor3f(0.5f, 0.5f, 0.3f);	break;
+			
+			case 4:		gl.glColor3f(0.3f, 0.3f, 0.15f);	break;
+			
+			case 5:		gl.glColor3f(0.0f, 0.3f, 0.0f);	break;
+			
+			default: 	break;
+		}
+		//draw cube
+		gl.glBegin(GL2.GL_QUADS);
+			
+			//front
+			if (drawPositiveZ) {
+				gl.glVertex3f(scale, scale, scale);
+				gl.glVertex3f(-scale, scale, scale);
+				gl.glVertex3f(-scale, -scale, scale);
+				gl.glVertex3f(scale, -scale, scale);
+			}
+			//left
+			if (drawPositiveX) {
+				gl.glVertex3f(scale, scale, -scale);
+				gl.glVertex3f(scale, scale, scale);
+				gl.glVertex3f(scale, -scale, scale);
+				gl.glVertex3f(scale, -scale, -scale);
+			}
+			//rigth
+			if (drawNegativeX) {
+				gl.glVertex3f(-scale, scale, scale);
+				gl.glVertex3f(-scale, scale, -scale);
+				gl.glVertex3f(-scale, -scale, -scale);
+				gl.glVertex3f(-scale, -scale, scale);
+			}
+			//top
+			if (drawPositiveY) {
+				gl.glVertex3f(scale, scale, -scale);
+				gl.glVertex3f(-scale, scale, -scale);
+				gl.glVertex3f(-scale, scale, scale);
+				gl.glVertex3f(scale, scale, scale);
+			}
+			//botton
+			if (drawNegativeY) {
+				gl.glVertex3f(scale, -scale, -scale);
+				gl.glVertex3f(-scale, -scale, -scale);
+				gl.glVertex3f(-scale, -scale, scale);
+				gl.glVertex3f(scale, -scale, scale);
+			}
+			//back
+			if (drawNegativeZ) {
+				gl.glVertex3f(-scale, scale, -scale);
+				gl.glVertex3f(scale, scale, -scale);
+				gl.glVertex3f(scale, -scale, -scale);
+				gl.glVertex3f(-scale, -scale, -scale);
+			}
 		gl.glEnd();
 		
 		//draw outline
@@ -384,6 +487,49 @@ class LocalMap {
 		
 		spawnTree( -2, 3, -3);
 		spawnTree( 5, 3, -8);
+		
+		setBlock(10, 3, 4, 3);
+		setBlock(13, 3, 5, 3);
+		setBlock(10, 3, 6, 3);
+		setBlock(10, 3, 7, 3);
+		setBlock(10, 3, 8, 3);
+		setBlock(11, 3, 4, 3);
+		setBlock(12, 3, 4, 3);
+		setBlock(13, 3, 4, 3);
+		setBlock(11, 3, 8, 3);
+		setBlock(12, 3, 8, 3);
+		setBlock(13, 3, 8, 3);
+		setBlock(13, 3, 7, 3);
+		setBlock(13, 3, 6, 3);
+		
+		setBlock(10, 4, 4, 3);
+		setBlock(13, 4, 5, 3);
+		setBlock(10, 4, 6, 3);
+		setBlock(10, 4, 7, 3);
+		setBlock(10, 4, 8, 3);
+		setBlock(11, 4, 4, 3);
+		setBlock(12, 4, 4, 3);
+		setBlock(13, 4, 4, 3);
+		setBlock(11, 4, 8, 3);
+		setBlock(12, 4, 8, 3);
+		setBlock(13, 4, 8, 3);
+		setBlock(13, 4, 7, 3);
+		setBlock(13, 4, 6, 3);
+		
+		setBlock(10, 5, 4, 3);
+		setBlock(13, 5, 5, 3);
+		setBlock(10, 5, 6, 3);
+		setBlock(10, 5, 7, 3);
+		setBlock(10, 5, 8, 3);
+		setBlock(11, 5, 4, 3);
+		setBlock(12, 5, 4, 3);
+		setBlock(13, 5, 4, 3);
+		setBlock(11, 5, 8, 3);
+		setBlock(12, 5, 8, 3);
+		setBlock(13, 5, 8, 3);
+		setBlock(13, 5, 7, 3);
+		setBlock(13, 5, 6, 3);
+		
 	}
 	
 	public int getBlock(int blockX, int blockY, int blockZ) {
@@ -468,7 +614,7 @@ class Player {
 	
 	LocalMap localMap;
 	
-	boolean physics = false;
+	boolean physics = true;
 	
 	float x, y, z, speedX, speedY, speedZ, lookDirSide, lookDirUp, friction, gravity;
 	
@@ -485,7 +631,7 @@ class Player {
 	}
 	
 	public float[] getEyePosition() {
-		return new float[] {x, y + 2, z, lookDirSide, lookDirUp};
+		return new float[] {x, y + 1.2f, z, lookDirSide, lookDirUp};
 	}
 	
 	public void renderTick(int deltaT) {
@@ -498,19 +644,26 @@ class Player {
 	
 	public void physics(int deltaT) {
 		
-		x += this.speedX;
-		y += this.speedY;
-		z += this.speedZ;
+		//move player
+		if (localMap.getBlock(Math.round(x + this.speedX), Math.round(y + 0.49f), Math.round(z)) == 0) x += this.speedX;
+		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f + this.speedY), Math.round(z)) == 0) y += this.speedY;
+		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f), Math.round(z + this.speedZ)) == 0) z += this.speedZ;
 		
-		// System.out.println(isOnGround() + " " + x + " " + y + " " + z);
-		// System.out.println(speedX + " " + speedY + " " + speedZ);
+		//System.out.println(isOnGround() + " " + x + " " + y + " " + z);
+		//System.out.println(speedX + " " + speedY + " " + speedZ);
 		
+		//calculate next move
 		if (speedX == 0.0f || (speedX > 0.0f && speedX - friction < 0.0f) || (speedX < 0.0f && speedX - friction > 0.0f)) speedX = 0.0f;
 		else if (speedX > 0.0f) speedX -= friction * ((float) deltaT/16600.0f);
 		else speedX += friction * ((float) deltaT/16600.0f);
 
 		if (physics == true) {
-			if (!isOnGround()) speedY -= 0.0135f; else speedY = 0;
+			if (!isOnGround()) {
+				speedY -= 0.0115f * ((float) deltaT/16600.0f);
+			} else {
+				speedY = 0;
+				y = Math.round(y);
+			}
 		} else {
 			if (speedY == 0 || (speedY > 0 && speedY - friction < 0) || (speedY < 0 && speedY - friction > 0)) speedY = 0; 
 			else if (speedY > 0) speedY -= friction * ((float) deltaT/16600.0f);
@@ -528,7 +681,6 @@ class Player {
 	
 	public void setSpeed(float speedX, float speedY, float speedZ) {
 		this.speedX = speedX;
-		//if (speedY == 0.2f) 
 		this.speedY = speedY;
 		this.speedZ = speedZ;
 	}
@@ -565,7 +717,7 @@ class Player {
 	}	
 	
 	public boolean isOnGround() {
-		return (localMap.getBlock(Math.round(x), Math.round(y), Math.round(z)) != 0 );
+		return (localMap.getBlock(Math.round(x), Math.round(y - 0.51f), Math.round(z)) != 0 );
 	}
 }
 
@@ -574,7 +726,7 @@ class MClone {
 		String title = "MClone";
 		int width = 1800, height = 1000;
 		
-		LocalMap map = new LocalMap(48, 64);
+		LocalMap map = new LocalMap(64, 64);
 		
 		GLCanvas canvans = new Renderer(map);
 		canvans.setPreferredSize(new Dimension(width, height));
