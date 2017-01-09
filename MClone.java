@@ -24,15 +24,14 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	Player player = new Player(0, 6, 0);
 	
-	boolean physics = true;
+	boolean physics = false;
 	
-	int deltaT;
-	
-	int timer = 0;
+	int deltaT, timer = 0;
 	
 	long lastTime = System.nanoTime();
 	private float cameraX = 0, cameraY = 6, cameraZ = 0, cameraDirUp = 0, cameraDirSide = 0;
-
+	
+	int[] look; 
 	
 	private short[] textures = new short[1];
 	
@@ -89,13 +88,15 @@ class Renderer extends GLCanvas implements GLEventListener {
 		processMouseInput();
 		player.renderTick(deltaT);
 		updateCamera();
+		look = getLookAtBlock();
 		
 		draw3D(gl);
 		drawHUD(gl);
 		
 		if (timer == 60) {
 			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms   x: " + cameraX + " y: " + cameraY + " z: " + cameraZ);
-			System.out.println(localMap.getBlock(-38, 2, 33));
+			//System.out.println(localMap.getBlock(-38, 2, 33));
+			
 			timer = 0;
 		} else {
 			timer++;
@@ -124,7 +125,9 @@ class Renderer extends GLCanvas implements GLEventListener {
 					// if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
 						// drawBlock(gl, localMap.getBlock(x, y, z));
 					// }
-					if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
+					if (look != null && x == look[0] && y == look[1] && z == look[2]) {
+						drawBlock(gl, 3, (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), (cameraY > y && localMap.getBlock(x, y + 1, z) == 0), (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+					} else if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
 						drawBlock(gl, localMap.getBlock(x, y, z), (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), (cameraY > y && localMap.getBlock(x, y + 1, z) == 0), (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
 					}
 					
@@ -412,6 +415,30 @@ class Renderer extends GLCanvas implements GLEventListener {
 	public boolean getPhysics() {
 		return physics;
 	}
+
+	public int[] getLookAtBlock() {
+		float[] camera = player.getEyePosition(); // {x, y, x, sideDir, upDir}
+		cameraX = camera[0];
+		cameraY = camera[1];
+		cameraZ = camera[2];
+		
+		int lookAtX, lookAtY, lookAtZ; 
+		
+		for (float f = 0.0f; f < 6.0f; f += 0.2f) {
+			lookAtX = (int) Math.round(camera[0] + f * (Math.sin(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])));
+			lookAtY = (int) Math.round(camera[1] + f * Math.sin(Math.toRadians(-camera[4])));
+			lookAtZ = (int) Math.round(camera[2] + f * (Math.cos(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])));
+			//System.out.println(lookAtX + " " + lookAtY + " " + lookAtZ);
+			
+			if (localMap.getBlock(lookAtX, lookAtY, lookAtZ) != 0) {
+				System.out.println(lookAtX + " " + lookAtY + " " + lookAtZ);
+				return new int[] {lookAtX, lookAtY, lookAtZ};
+			}
+		}
+		
+		return null;
+	}
+	
 }
 
 class Map {
