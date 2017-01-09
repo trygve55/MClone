@@ -95,6 +95,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		
 		if (timer == 60) {
 			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms   x: " + cameraX + " y: " + cameraY + " z: " + cameraZ);
+			System.out.println(localMap.getBlock(-38, 2, 33));
 			timer = 0;
 		} else {
 			timer++;
@@ -152,7 +153,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		cameraY = camera[1];
 		cameraZ = camera[2];
 		
-		glu.gluLookAt(camera[0], camera[1], camera[2], camera[0] + Math.sin(Math.toRadians(-camera[3])), camera[1] + Math.sin(Math.toRadians(-camera[4])), camera[2] + Math.cos(Math.toRadians(-camera[3])), 0, 1, 0);	
+		glu.gluLookAt(camera[0], camera[1], camera[2], camera[0] + (Math.sin(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])), camera[1] + Math.sin(Math.toRadians(-camera[4])), camera[2] + (Math.cos(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])), 0, 1, 0);	
 	}
 	
 	private void processKeyboardInput(int deltaT) {
@@ -218,8 +219,10 @@ class Renderer extends GLCanvas implements GLEventListener {
 		cameraDirUp += (float) mouseChange[1]*sence;
 		cameraDirSide += (float) mouseChange[0]*sence;
 		
-		if (cameraDirUp > 90.0f)  cameraDirUp = 90.0f;
-		if (cameraDirUp < -90.0f)  cameraDirUp = -90.0f;
+		float cameraAngleLimit = 89.9f;
+		
+		if (cameraDirUp > cameraAngleLimit)  cameraDirUp = cameraAngleLimit;
+		if (cameraDirUp < -cameraAngleLimit)  cameraDirUp = -cameraAngleLimit;
 		
 		player.setLookDir(cameraDirSide, cameraDirUp);
 	}
@@ -614,7 +617,7 @@ class Player {
 	
 	LocalMap localMap;
 	
-	boolean physics = true;
+	boolean physics = false;
 	
 	float x, y, z, speedX, speedY, speedZ, lookDirSide, lookDirUp, friction, gravity;
 	
