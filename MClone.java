@@ -11,6 +11,8 @@ import com.jogamp.opengl.util.FPSAnimator;
 import java.io.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Random;
 
 //import demos.common.TextureReader;
@@ -24,12 +26,12 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	Player player = new Player(0, 6, 0);
 	
-	boolean physics = false;
+	boolean physics = true;
 	
-	int deltaT, timer = 0;
+	int deltaT, timer, selectedBlock = 2;
 	
 	long lastTime = System.nanoTime();
-	private float cameraX = 0, cameraY = 6, cameraZ = 0, cameraDirUp = 0, cameraDirSide = 0;
+	private float cameraX = 0, cameraY = 6, cameraZ = 0, cameraDirUp = 0, cameraDirSide = 0, mouseTimerRemove = 0.0f, mouseTimerPlace = 0.0f;; 
 	
 	int[] look; 
 	
@@ -38,6 +40,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 	Renderer(LocalMap localMap) {
 		this.addGLEventListener(this);
 		this.addKeyListener(keyboardInput);
+		this.addMouseListener(mouseInput);
 		this.localMap = localMap;
 		player.setMap(localMap);
 	}
@@ -88,7 +91,6 @@ class Renderer extends GLCanvas implements GLEventListener {
 		processMouseInput();
 		player.renderTick(deltaT);
 		updateCamera();
-		look = getLookAtBlock();
 		
 		draw3D(gl);
 		drawHUD(gl);
@@ -126,9 +128,28 @@ class Renderer extends GLCanvas implements GLEventListener {
 						// drawBlock(gl, localMap.getBlock(x, y, z));
 					// }
 					if (look != null && x == look[0] && y == look[1] && z == look[2]) {
-						drawBlock(gl, 3, (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), (cameraY > y && localMap.getBlock(x, y + 1, z) == 0), (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
-					} else if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
-						drawBlock(gl, localMap.getBlock(x, y, z), (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), (cameraY > y && localMap.getBlock(x, y + 1, z) == 0), (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+						drawBlock(gl, 3, 
+						(cameraX > x && localMap.getBlock(x + 1, y, z) == 0), 
+						(cameraX < x && localMap.getBlock(x - 1, y, z) == 0), 
+						(cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
+						(cameraY < y && localMap.getBlock(x, y - 1, z) == 0), 
+						(cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), 
+						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+					} else if (localMap.getBlock(x, y, z) != 0 &&
+						(localMap.getBlock(x + 1, y, z) == 0 ||
+						localMap.getBlock(x - 1, y, z) == 0 ||
+						localMap.getBlock(x, y + 1, z) == 0 ||
+						localMap.getBlock(x, y - 1, z) == 0 ||
+						localMap.getBlock(x, y, z + 1) == 0 ||
+						localMap.getBlock(x, y, z - 1) == 0)) {
+						
+						drawBlock(gl, localMap.getBlock(x, y, z),
+						(cameraX > x && localMap.getBlock(x + 1, y, z) == 0),
+						(cameraX < x && localMap.getBlock(x - 1, y, z) == 0), 
+						(cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
+						(cameraY < y && localMap.getBlock(x, y - 1, z) == 0),
+						(cameraZ > z && localMap.getBlock(x, y, z + 1) == 0),
+						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
 					}
 					
 					gl.glTranslatef(0.0f, 0.0f, 1.0f);
@@ -215,6 +236,8 @@ class Renderer extends GLCanvas implements GLEventListener {
 	}
 		
 	private void processMouseInput() {
+		
+		//mouse movement and camera rotation
 		float sence = 0.1f;
 		
 		double[] mouseChange = mouseInput.getMouseMovement();
@@ -228,6 +251,23 @@ class Renderer extends GLCanvas implements GLEventListener {
 		if (cameraDirUp < -cameraAngleLimit)  cameraDirUp = -cameraAngleLimit;
 		
 		player.setLookDir(cameraDirSide, cameraDirUp);
+		
+		look = getLookAtBlock();
+		
+		//mouse bottons
+		if (mouseTimerRemove > 0.0f) {
+			mouseTimerRemove -= 16.0f * ((float) deltaT/16600.0f);
+		} else if (mouseTimerRemove <= 0.0f && look != null && mouseInput.buttonHold(1)) {
+			localMap.setBlock(look[0], look[1], look[2], 0);
+			mouseTimerRemove = 180.0f;
+		}
+		
+		if (mouseTimerPlace > 0.0f) {
+			mouseTimerPlace -= 16.0f * ((float) deltaT/16600.0f);
+		} else if (mouseTimerPlace <= 0.0f && look != null && mouseInput.buttonHold(3)) {
+			localMap.setBlock(look[0], look[1], look[2], selectedBlock);
+			mouseTimerPlace = 180.0f;
+		}
 	}
 	
 	private void drawBlock(GL2 gl, int type) {
@@ -595,7 +635,7 @@ class LocalMap {
 	}
 }
 
-class KeyboardInput extends KeyAdapter{
+class KeyboardInput extends KeyAdapter {
 	//Renderer renderer;
 	
 	boolean[] isPressed = new boolean[255];
@@ -619,8 +659,11 @@ class KeyboardInput extends KeyAdapter{
 	}
 }
 
-class MouseInput {
+class MouseInput extends MouseAdapter {
+	
 	private double lastMouseX = MouseInfo.getPointerInfo().getLocation().getX(), lastMouseY = MouseInfo.getPointerInfo().getLocation().getY();
+	
+	boolean[] isPressed = new boolean[16];
 	
 	public double[] getMouseMovement() {
 		double mouseChangeX = MouseInfo.getPointerInfo().getLocation().getX() - lastMouseX;
@@ -638,13 +681,25 @@ class MouseInput {
 		
 		return new double[] {mouseChangeX, mouseChangeY};
 	}
+	
+	public void mousePressed(MouseEvent e) {
+		isPressed[e.getButton()] = true;
+	}
+	
+	public void mouseReleased(MouseEvent e) {
+		isPressed[e.getButton()] = false;
+	}
+	
+	public boolean buttonHold(int buttonCode) {
+		return isPressed[buttonCode];
+	}
 }
 
 class Player {
 	
 	LocalMap localMap;
 	
-	boolean physics = false;
+	boolean physics = true;
 	
 	float x, y, z, speedX, speedY, speedZ, lookDirSide, lookDirUp, friction, gravity;
 	
