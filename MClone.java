@@ -488,47 +488,47 @@ class LocalMap {
 		spawnTree( -2, 3, -3);
 		spawnTree( 5, 3, -8);
 		
-		setBlock(10, 3, 4, 3);
-		setBlock(13, 3, 5, 3);
-		setBlock(10, 3, 6, 3);
-		setBlock(10, 3, 7, 3);
-		setBlock(10, 3, 8, 3);
-		setBlock(11, 3, 4, 3);
-		setBlock(12, 3, 4, 3);
-		setBlock(13, 3, 4, 3);
-		setBlock(11, 3, 8, 3);
-		setBlock(12, 3, 8, 3);
-		setBlock(13, 3, 8, 3);
-		setBlock(13, 3, 7, 3);
-		setBlock(13, 3, 6, 3);
+		// setBlock(10, 3, 4, 3);
+		// setBlock(13, 3, 5, 3);
+		// setBlock(10, 3, 6, 3);
+		// setBlock(10, 3, 7, 3);
+		// setBlock(10, 3, 8, 3);
+		// setBlock(11, 3, 4, 3);
+		// setBlock(12, 3, 4, 3);
+		// setBlock(13, 3, 4, 3);
+		// setBlock(11, 3, 8, 3);
+		// setBlock(12, 3, 8, 3);
+		// setBlock(13, 3, 8, 3);
+		// setBlock(13, 3, 7, 3);
+		// setBlock(13, 3, 6, 3);
 		
-		setBlock(10, 4, 4, 3);
-		setBlock(13, 4, 5, 3);
-		setBlock(10, 4, 6, 3);
-		setBlock(10, 4, 7, 3);
-		setBlock(10, 4, 8, 3);
-		setBlock(11, 4, 4, 3);
-		setBlock(12, 4, 4, 3);
-		setBlock(13, 4, 4, 3);
-		setBlock(11, 4, 8, 3);
-		setBlock(12, 4, 8, 3);
-		setBlock(13, 4, 8, 3);
-		setBlock(13, 4, 7, 3);
-		setBlock(13, 4, 6, 3);
+		// setBlock(10, 4, 4, 3);
+		// setBlock(13, 4, 5, 3);
+		// setBlock(10, 4, 6, 3);
+		// setBlock(10, 4, 7, 3);
+		// setBlock(10, 4, 8, 3);
+		// setBlock(11, 4, 4, 3);
+		// setBlock(12, 4, 4, 3);
+		// setBlock(13, 4, 4, 3);
+		// setBlock(11, 4, 8, 3);
+		// setBlock(12, 4, 8, 3);
+		// setBlock(13, 4, 8, 3);
+		// setBlock(13, 4, 7, 3);
+		// setBlock(13, 4, 6, 3);
 		
-		setBlock(10, 5, 4, 3);
-		setBlock(13, 5, 5, 3);
-		setBlock(10, 5, 6, 3);
-		setBlock(10, 5, 7, 3);
-		setBlock(10, 5, 8, 3);
-		setBlock(11, 5, 4, 3);
-		setBlock(12, 5, 4, 3);
-		setBlock(13, 5, 4, 3);
-		setBlock(11, 5, 8, 3);
-		setBlock(12, 5, 8, 3);
-		setBlock(13, 5, 8, 3);
-		setBlock(13, 5, 7, 3);
-		setBlock(13, 5, 6, 3);
+		// setBlock(10, 5, 4, 3);
+		// setBlock(13, 5, 5, 3);
+		// setBlock(10, 5, 6, 3);
+		// setBlock(10, 5, 7, 3);
+		// setBlock(10, 5, 8, 3);
+		// setBlock(11, 5, 4, 3);
+		// setBlock(12, 5, 4, 3);
+		// setBlock(13, 5, 4, 3);
+		// setBlock(11, 5, 8, 3);
+		// setBlock(12, 5, 8, 3);
+		// setBlock(13, 5, 8, 3);
+		// setBlock(13, 5, 7, 3);
+		// setBlock(13, 5, 6, 3);
 		
 	}
 	
@@ -644,10 +644,24 @@ class Player {
 	
 	public void physics(int deltaT) {
 		
-		//move player
-		if (localMap.getBlock(Math.round(x + this.speedX), Math.round(y + 0.49f), Math.round(z)) == 0) x += this.speedX;
-		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f + this.speedY), Math.round(z)) == 0) y += this.speedY;
-		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f), Math.round(z + this.speedZ)) == 0) z += this.speedZ;
+		//check if posible to move player
+		if (this.speedX > 0.0f && 
+		localMap.getBlock(Math.round(x + 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
+		localMap.getBlock(Math.round(x + 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0 ||
+		this.speedX < 0.0f && 
+		localMap.getBlock(Math.round(x - 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
+		localMap.getBlock(Math.round(x - 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0)
+		x += this.speedX;
+		
+		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f + this.speedY * ((float) deltaT/16600.0f)), Math.round(z)) == 0) y += this.speedY;
+		
+		if (this.speedZ > 0.0f &&
+		localMap.getBlock(Math.round(x), Math.round(y + 0.49f), Math.round(z + 0.15f + this.speedZ * ((float) deltaT/16600.0f))) == 0 &&
+		localMap.getBlock(Math.round(x), Math.round(y + 1.49f), Math.round(z + 0.15f + this.speedZ * ((float) deltaT/16600.0f))) == 0 ||
+		this.speedZ < 0.0f &&
+		localMap.getBlock(Math.round(x), Math.round(y + 0.49f), Math.round(z - 0.15f + this.speedZ * ((float) deltaT/16600.0f))) == 0 &&
+		localMap.getBlock(Math.round(x), Math.round(y + 1.49f), Math.round(z - 0.15f + this.speedZ * ((float) deltaT/16600.0f))) == 0)
+		z += this.speedZ;
 		
 		//System.out.println(isOnGround() + " " + x + " " + y + " " + z);
 		//System.out.println(speedX + " " + speedY + " " + speedZ);
