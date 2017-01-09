@@ -124,9 +124,6 @@ class Renderer extends GLCanvas implements GLEventListener {
 		for (int x = -localMap.getLocalMapSize()/2+1; x < localMap.getLocalMapSize()/2; x++) {
 			for (int y = 0; y < localMap.getMapHeight(); y++) {
 				for (int z = -localMap.getLocalMapSize()/2+1; z < localMap.getLocalMapSize()/2; z++) {
-					// if (localMap.getBlock(x, y, z) != 0 && (localMap.getBlock(x + 1, y, z) == 0 || localMap.getBlock(x - 1, y, z) == 0 || localMap.getBlock(x, y + 1, z) == 0 || localMap.getBlock(x, y - 1, z) == 0 || localMap.getBlock(x, y, z + 1) == 0 || localMap.getBlock(x, y, z - 1) == 0)) {
-						// drawBlock(gl, localMap.getBlock(x, y, z));
-					// }
 					if (look != null && x == look[0] && y == look[1] && z == look[2]) {
 						drawBlock(gl, 3, 
 						(cameraX > x && localMap.getBlock(x + 1, y, z) == 0), 
@@ -229,7 +226,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
-			if (player.isOnGround()) speedY = 0.18f;
+			if (player.isOnGround()) speedY = 0.18f * ((float) deltaT/16600.0f);
 		}
 		
 		player.setSpeed(speedX, speedY, speedZ);
@@ -464,14 +461,14 @@ class Renderer extends GLCanvas implements GLEventListener {
 		
 		int lookAtX, lookAtY, lookAtZ; 
 		
-		for (float f = 0.0f; f < 6.0f; f += 0.2f) {
+		for (float f = 0.0f; f < 6.0f; f += 0.2f) { 
 			lookAtX = (int) Math.round(camera[0] + f * (Math.sin(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])));
 			lookAtY = (int) Math.round(camera[1] + f * Math.sin(Math.toRadians(-camera[4])));
 			lookAtZ = (int) Math.round(camera[2] + f * (Math.cos(Math.toRadians(-camera[3]))) * Math.cos(Math.toRadians(-camera[4])));
 			//System.out.println(lookAtX + " " + lookAtY + " " + lookAtZ);
 			
 			if (localMap.getBlock(lookAtX, lookAtY, lookAtZ) != 0) {
-				System.out.println(lookAtX + " " + lookAtY + " " + lookAtZ);
+				//System.out.println(lookAtX + " " + lookAtY + " " + lookAtZ);
 				return new int[] {lookAtX, lookAtY, lookAtZ};
 			}
 		}
@@ -557,48 +554,51 @@ class LocalMap {
 		
 		spawnTree( -2, 3, -3);
 		spawnTree( 5, 3, -8);
+		spawnTree( -3, 3, -8);
+		spawnTree( 8, 3, -12);
+		spawnTree( 6, 3, -5);
 		
-		// setBlock(10, 3, 4, 3);
-		// setBlock(13, 3, 5, 3);
-		// setBlock(10, 3, 6, 3);
-		// setBlock(10, 3, 7, 3);
-		// setBlock(10, 3, 8, 3);
-		// setBlock(11, 3, 4, 3);
-		// setBlock(12, 3, 4, 3);
-		// setBlock(13, 3, 4, 3);
-		// setBlock(11, 3, 8, 3);
-		// setBlock(12, 3, 8, 3);
-		// setBlock(13, 3, 8, 3);
-		// setBlock(13, 3, 7, 3);
-		// setBlock(13, 3, 6, 3);
+		setBlock(10, 3, 4, 3);
+		setBlock(13, 3, 5, 3);
+		setBlock(10, 3, 6, 3);
+		setBlock(10, 3, 7, 3);
+		setBlock(10, 3, 8, 3);
+		setBlock(11, 3, 4, 3);
+		setBlock(12, 3, 4, 3);
+		setBlock(13, 3, 4, 3);
+		setBlock(11, 3, 8, 3);
+		setBlock(12, 3, 8, 3);
+		setBlock(13, 3, 8, 3);
+		setBlock(13, 3, 7, 3);
+		setBlock(13, 3, 6, 3);
 		
-		// setBlock(10, 4, 4, 3);
-		// setBlock(13, 4, 5, 3);
-		// setBlock(10, 4, 6, 3);
-		// setBlock(10, 4, 7, 3);
-		// setBlock(10, 4, 8, 3);
-		// setBlock(11, 4, 4, 3);
-		// setBlock(12, 4, 4, 3);
-		// setBlock(13, 4, 4, 3);
-		// setBlock(11, 4, 8, 3);
-		// setBlock(12, 4, 8, 3);
-		// setBlock(13, 4, 8, 3);
-		// setBlock(13, 4, 7, 3);
-		// setBlock(13, 4, 6, 3);
+		setBlock(10, 4, 4, 3);
+		setBlock(13, 4, 5, 3);
+		setBlock(10, 4, 6, 3);
+		setBlock(10, 4, 7, 3);
+		setBlock(10, 4, 8, 3);
+		setBlock(11, 4, 4, 3);
+		setBlock(12, 4, 4, 3);
+		setBlock(13, 4, 4, 3);
+		setBlock(11, 4, 8, 3);
+		setBlock(12, 4, 8, 3);
+		setBlock(13, 4, 8, 3);
+		setBlock(13, 4, 7, 3);
+		setBlock(13, 4, 6, 3);
 		
-		// setBlock(10, 5, 4, 3);
-		// setBlock(13, 5, 5, 3);
-		// setBlock(10, 5, 6, 3);
-		// setBlock(10, 5, 7, 3);
-		// setBlock(10, 5, 8, 3);
-		// setBlock(11, 5, 4, 3);
-		// setBlock(12, 5, 4, 3);
-		// setBlock(13, 5, 4, 3);
-		// setBlock(11, 5, 8, 3);
-		// setBlock(12, 5, 8, 3);
-		// setBlock(13, 5, 8, 3);
-		// setBlock(13, 5, 7, 3);
-		// setBlock(13, 5, 6, 3);
+		setBlock(10, 5, 4, 3);
+		setBlock(13, 5, 5, 3);
+		setBlock(10, 5, 6, 3);
+		setBlock(10, 5, 7, 3);
+		setBlock(10, 5, 8, 3);
+		setBlock(11, 5, 4, 3);
+		setBlock(12, 5, 4, 3);
+		setBlock(13, 5, 4, 3);
+		setBlock(11, 5, 8, 3);
+		setBlock(12, 5, 8, 3);
+		setBlock(13, 5, 8, 3);
+		setBlock(13, 5, 7, 3);
+		setBlock(13, 5, 6, 3);
 		
 	}
 	
@@ -738,7 +738,10 @@ class Player {
 		localMap.getBlock(Math.round(x - 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0)
 		x += this.speedX;
 		
-		if (localMap.getBlock(Math.round(x), Math.round(y + 0.49f + this.speedY * ((float) deltaT/16600.0f)), Math.round(z)) == 0) y += this.speedY;
+		if ((this.speedY < 0.0f && 
+		localMap.getBlock(Math.round(x), Math.round(y + 0.49f + this.speedY * ((float) deltaT/16600.0f)), Math.round(z)) == 0) ||
+		(this.speedY > 0.0f && 
+		localMap.getBlock(Math.round(x), Math.round(y + 1.31f + this.speedY * ((float) deltaT/16600.0f)), Math.round(z)) == 0)) y += this.speedY;
 		
 		if (this.speedZ > 0.0f &&
 		localMap.getBlock(Math.round(x), Math.round(y + 0.49f), Math.round(z + 0.15f + this.speedZ * ((float) deltaT/16600.0f))) == 0 &&
