@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Random;
+import java.io.*;
+import com.jogamp.opengl.util.texture.*;
 
 //import demos.common.TextureReader;
 
@@ -28,14 +30,14 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	boolean physics = true;
 	
-	int deltaT, timer, selectedBlock = 2;
+	int deltaT, timer, selectedBlock = 2, lastTexture;
 	
 	long lastTime = System.nanoTime();
 	private float cameraX = 0, cameraY = 6, cameraZ = 0, cameraDirUp = 0, cameraDirSide = 0, mouseTimerRemove = 0.0f, mouseTimerPlace = 0.0f;; 
 	
 	int[] look; 
 	
-	private short[] textures = new short[1];
+	private Texture[] texture = new Texture[6];
 	
 	Renderer(LocalMap localMap) {
 		this.addGLEventListener(this);
@@ -66,6 +68,21 @@ class Renderer extends GLCanvas implements GLEventListener {
 		
 		fPSAnimator = new FPSAnimator(glDrawable, 120);
 		fPSAnimator.start();
+		
+		//load textures
+		TextureIO.setTexRectEnabled(false);
+		System.out.println(TextureIO.isTexRectEnabled());
+		
+		for (int i = 0;i < texture.length;i++) {
+			try {
+				InputStream inputStream = new FileInputStream("textures/" + i + ".bmp");
+				TextureData textureData = TextureIO.newTextureData(gl.getGLProfile(), inputStream, false, "bmp");
+				texture[i] = TextureIO.newTexture(textureData);
+				System.out.println("texture " + i + " loaded");
+			} catch (Exception e) {
+				System.out.println("cant load texture " + i);
+			}
+		}
 	}
 	
 	public void reshape(GLAutoDrawable glDrawable, int x, int y, int width, int height) {
@@ -118,6 +135,9 @@ class Renderer extends GLCanvas implements GLEventListener {
 	}
 	
 	private void drawLocalMap(GL2 gl) {
+		
+		gl.glEnable(GL2.GL_TEXTURE_2D);
+		
 		
 		gl.glTranslatef((float) -localMap.getLocalMapSize()/2 + 1, 0.0f, -localMap.getLocalMapSize()/2 + 1);
 		
@@ -226,7 +246,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
-			if (player.isOnGround()) speedY = 0.18f * ((float) deltaT/16600.0f);
+			if (player.isOnGround()) speedY = 0.12f * ((float) deltaT/16600.0f);
 		}
 		
 		player.setSpeed(speedX, speedY, speedZ);
@@ -356,93 +376,113 @@ class Renderer extends GLCanvas implements GLEventListener {
 		Random rand = new Random();
 		
 		//select color
-		switch (type) {
-			case 1:		gl.glColor3f(0.1f, 0.7f, 0.0f);	break;
+		// switch (type) {
+			// case 1:		gl.glColor3f(0.1f, 0.7f, 0.0f);	break;
 			
-			case 2:		gl.glColor3f(0.5f, 0.5f, 0.5f);	break;
+			// case 2:		gl.glColor3f(0.5f, 0.5f, 0.5f);	break;
 			
-			case 3:		gl.glColor3f(0.5f, 0.5f, 0.3f);	break;
+			// case 3:		gl.glColor3f(0.5f, 0.5f, 0.3f);	break;
 			
-			case 4:		gl.glColor3f(0.3f, 0.3f, 0.15f);	break;
+			// case 4:		gl.glColor3f(0.3f, 0.3f, 0.15f);	break;
 			
-			case 5:		gl.glColor3f(0.0f, 0.3f, 0.0f);	break;
+			// case 5:		gl.glColor3f(0.0f, 0.3f, 0.0f);	break;
 			
-			default: 	break;
+			// default: 	break;
+		// }
+		
+		
+		//gl.glColor3f(1.0f, 1.0f, 1.0f);
+		
+		//if (type == 4) System.out.println("test");
+		
+		if (lastTexture != type && texture.length > type && texture[type] != null) {
+			texture[type].enable(gl);
+			texture[type].bind(gl);
+			lastTexture = type;
+		} else if (lastTexture != type && lastTexture != 0 && texture[0] != null) {
+			texture[0].enable(gl);
+			texture[0].bind(gl);
+			lastTexture = 0;
 		}
+		
+		gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MAG_FILTER, GL2.GL_NEAREST);
+		gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MIN_FILTER, GL2.GL_NEAREST);
+		
 		//draw cube
 		gl.glBegin(GL2.GL_QUADS);
-			
+		
+			//gl.glNormal3f(-1.0f,0.0f,0.0f);
 			//front
 			if (drawPositiveZ) {
-				gl.glVertex3f(scale, scale, scale);
-				gl.glVertex3f(-scale, scale, scale);
-				gl.glVertex3f(-scale, -scale, scale);
-				gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, scale, scale);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, -scale, scale);
 			}
 			//left
 			if (drawPositiveX) {
-				gl.glVertex3f(scale, scale, -scale);
-				gl.glVertex3f(scale, scale, scale);
-				gl.glVertex3f(scale, -scale, scale);
-				gl.glVertex3f(scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.0f);	gl.glVertex3f(scale, scale, -scale);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(scale, -scale, -scale);
 			}
 			//rigth
 			if (drawNegativeX) {
-				gl.glVertex3f(-scale, scale, scale);
-				gl.glVertex3f(-scale, scale, -scale);
-				gl.glVertex3f(-scale, -scale, -scale);
-				gl.glVertex3f(-scale, -scale, scale);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(-scale, scale, -scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(-scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale, -scale, scale);
 			}
 			//top
 			if (drawPositiveY) {
-				gl.glVertex3f(scale, scale, -scale);
-				gl.glVertex3f(-scale, scale, -scale);
-				gl.glVertex3f(-scale, scale, scale);
-				gl.glVertex3f(scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale, scale, -scale);
+				gl.glTexCoord2f(0.0f, 0.0f);	gl.glVertex3f(-scale, scale, -scale);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, scale, scale);
 			}
 			//botton
 			if (drawNegativeY) {
-				gl.glVertex3f(scale, -scale, -scale);
-				gl.glVertex3f(-scale, -scale, -scale);
-				gl.glVertex3f(-scale, -scale, scale);
-				gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, -scale, -scale);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale, -scale, -scale);
+				gl.glTexCoord2f(0.0f, 0.75f);	gl.glVertex3f(-scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale, -scale, scale);
 			}
 			//back
 			if (drawNegativeZ) {
-				gl.glVertex3f(-scale, scale, -scale);
-				gl.glVertex3f(scale, scale, -scale);
-				gl.glVertex3f(scale, -scale, -scale);
-				gl.glVertex3f(-scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale, scale, -scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, scale, -scale);
+				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.75f);	gl.glVertex3f(-scale, -scale, -scale);
 			}
 		gl.glEnd();
 		
-		//draw outline
-		gl.glColor3f(0.0f, 0.0f, 0.0f);
-		//front
-		gl.glBegin(GL2.GL_LINE_LOOP);
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(-scale, -scale, scale);
-			gl.glVertex3f(scale, -scale, scale);
-		gl.glEnd();
-		//back
-		gl.glBegin(GL2.GL_LINE_LOOP);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-		gl.glEnd();
-		//sides
-		gl.glBegin(GL2.GL_LINES);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(scale, -scale, scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, scale);
-		gl.glEnd();
+		// //draw outline
+		// gl.glColor3f(0.0f, 0.0f, 0.0f);
+		// //front
+		// gl.glBegin(GL2.GL_LINE_LOOP);
+			// gl.glVertex3f(scale, scale, scale);
+			// gl.glVertex3f(-scale, scale, scale);
+			// gl.glVertex3f(-scale, -scale, scale);
+			// gl.glVertex3f(scale, -scale, scale);
+		// gl.glEnd();
+		// //back
+		// gl.glBegin(GL2.GL_LINE_LOOP);
+			// gl.glVertex3f(-scale, scale, -scale);
+			// gl.glVertex3f(scale, scale, -scale);
+			// gl.glVertex3f(scale, -scale, -scale);
+			// gl.glVertex3f(-scale, -scale, -scale);
+		// gl.glEnd();
+		// //sides
+		// gl.glBegin(GL2.GL_LINES);
+			// gl.glVertex3f(-scale, scale, -scale);
+			// gl.glVertex3f(-scale, scale, scale);
+			// gl.glVertex3f(scale, scale, -scale);
+			// gl.glVertex3f(scale, scale, scale);
+			// gl.glVertex3f(scale, -scale, -scale);
+			// gl.glVertex3f(scale, -scale, scale);
+			// gl.glVertex3f(-scale, -scale, -scale);
+			// gl.glVertex3f(-scale, -scale, scale);
+		// gl.glEnd();
 	}
 	
 	public void setPhysics(boolean physics) {
