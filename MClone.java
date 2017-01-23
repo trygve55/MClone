@@ -66,7 +66,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		gl.glEnable(GL2.GL_DEPTH_TEST);
 		gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
 		
-		fPSAnimator = new FPSAnimator(glDrawable, 120);
+		fPSAnimator = new FPSAnimator(glDrawable, 240);
 		fPSAnimator.start();
 		
 		//load textures
@@ -113,7 +113,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		drawHUD(gl);
 		
 		if (timer == 60) {
-			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000000 + "ms   x: " + cameraX + " y: " + cameraY + " z: " + cameraZ);
+			System.out.println("FPS: " + (int) (1000000.0f/ (float) deltaT) + "  render time: " + (System.nanoTime() - lastTime)/1000 + "us   x: " + cameraX + " y: " + cameraY + " z: " + cameraZ);
 			//System.out.println(localMap.getBlock(-38, 2, 33));
 			
 			timer = 0;
@@ -139,7 +139,42 @@ class Renderer extends GLCanvas implements GLEventListener {
 		gl.glEnable(GL2.GL_TEXTURE_2D);
 		
 		
-		gl.glTranslatef((float) -localMap.getLocalMapSize()/2 + 1, 0.0f, -localMap.getLocalMapSize()/2 + 1);
+		// gl.glTranslatef((float) -localMap.getLocalMapSize()/2 + 1, 0.0f, -localMap.getLocalMapSize()/2 + 1);
+		
+		// for (int x = -localMap.getLocalMapSize()/2+1; x < localMap.getLocalMapSize()/2; x++) {
+			// for (int y = 0; y < localMap.getMapHeight(); y++) {
+				// for (int z = -localMap.getLocalMapSize()/2+1; z < localMap.getLocalMapSize()/2; z++) {
+					// if (look != null && x == look[0] && y == look[1] && z == look[2]) {
+						// drawBlock(gl, 3, 
+						// (cameraX > x && localMap.getBlock(x + 1, y, z) == 0), 
+						// (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), 
+						// (cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
+						// (cameraY < y && localMap.getBlock(x, y - 1, z) == 0), 
+						// (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), 
+						// (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+					// } else if (localMap.getBlock(x, y, z) != 0 &&
+						// (localMap.getBlock(x + 1, y, z) == 0 ||
+						// localMap.getBlock(x - 1, y, z) == 0 ||
+						// localMap.getBlock(x, y + 1, z) == 0 ||
+						// localMap.getBlock(x, y - 1, z) == 0 ||
+						// localMap.getBlock(x, y, z + 1) == 0 ||
+						// localMap.getBlock(x, y, z - 1) == 0)) {
+						
+						// drawBlock(gl, localMap.getBlock(x, y, z),
+						// (cameraX > x && localMap.getBlock(x + 1, y, z) == 0),
+						// (cameraX < x && localMap.getBlock(x - 1, y, z) == 0), 
+						// (cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
+						// (cameraY < y && localMap.getBlock(x, y - 1, z) == 0),
+						// (cameraZ > z && localMap.getBlock(x, y, z + 1) == 0),
+						// (cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+					// }
+					
+					// gl.glTranslatef(0.0f, 0.0f, 1.0f);
+				// }
+				// gl.glTranslatef(0.0f, 1.0f, -localMap.getLocalMapSize()+1);
+			// }
+			// gl.glTranslatef(1.0f, -localMap.getMapHeight(), 0.0f);
+		// }
 		
 		for (int x = -localMap.getLocalMapSize()/2+1; x < localMap.getLocalMapSize()/2; x++) {
 			for (int y = 0; y < localMap.getMapHeight(); y++) {
@@ -151,7 +186,8 @@ class Renderer extends GLCanvas implements GLEventListener {
 						(cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
 						(cameraY < y && localMap.getBlock(x, y - 1, z) == 0), 
 						(cameraZ > z && localMap.getBlock(x, y, z + 1) == 0), 
-						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0),
+						(float) x, (float) y, (float) z);
 					} else if (localMap.getBlock(x, y, z) != 0 &&
 						(localMap.getBlock(x + 1, y, z) == 0 ||
 						localMap.getBlock(x - 1, y, z) == 0 ||
@@ -166,14 +202,11 @@ class Renderer extends GLCanvas implements GLEventListener {
 						(cameraY > y && localMap.getBlock(x, y + 1, z) == 0),
 						(cameraY < y && localMap.getBlock(x, y - 1, z) == 0),
 						(cameraZ > z && localMap.getBlock(x, y, z + 1) == 0),
-						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0));
+						(cameraZ < z && localMap.getBlock(x, y, z - 1) == 0),
+						(float) x, (float) y, (float) z);
 					}
-					
-					gl.glTranslatef(0.0f, 0.0f, 1.0f);
 				}
-				gl.glTranslatef(0.0f, 1.0f, -localMap.getLocalMapSize()+1);
 			}
-			gl.glTranslatef(1.0f, -localMap.getMapHeight(), 0.0f);
 		}
 	}
 	
@@ -246,7 +279,7 @@ class Renderer extends GLCanvas implements GLEventListener {
 		}
 		
 		if (keyboardInput.keyHold(jumpKey)) {
-			if (player.isOnGround()) speedY = 0.12f * ((float) deltaT/16600.0f);
+			if (player.isOnGround()) speedY = 0.13f * ((float) deltaT/16600.0f);
 		}
 		
 		player.setSpeed(speedX, speedY, speedZ);
@@ -289,111 +322,89 @@ class Renderer extends GLCanvas implements GLEventListener {
 	
 	private void drawBlock(GL2 gl, int type) {
 		float scale = 0.5f;
-		//drawBlock
-		Random rand = new Random();
-		
-		//select color
-		switch (type) {
-			case 1:		gl.glColor3f(0.1f, 0.7f, 0.0f);	break;
-			
-			case 2:		gl.glColor3f(0.5f, 0.5f, 0.5f);	break;
-			
-			case 3:		gl.glColor3f(0.5f, 0.5f, 0.3f);	break;
-			
-			case 4:		gl.glColor3f(0.3f, 0.3f, 0.15f);	break;
-			
-			case 5:		gl.glColor3f(0.0f, 0.3f, 0.0f);	break;
-			
-			default: 	break;
+		if (lastTexture != type && texture.length > type && texture[type] != null) {
+			texture[type].enable(gl);
+			texture[type].bind(gl);
+			lastTexture = type;
+		} else if (lastTexture != type && lastTexture != 0 && texture[0] != null) {
+			texture[0].enable(gl);
+			texture[0].bind(gl);
+			lastTexture = 0;
 		}
+		
+		gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MAG_FILTER, GL2.GL_NEAREST);
+		gl.glTexParameteri(GL2.GL_TEXTURE_2D, GL2.GL_TEXTURE_MIN_FILTER, GL2.GL_NEAREST);
+		
 		//draw cube
 		gl.glBegin(GL2.GL_QUADS);
-			
+		
+			//gl.glNormal3f(-1.0f,0.0f,0.0f);
 			//front
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(-scale, -scale, scale);
-			gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(0.5f, 0.5f, 0.5f);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-0.5f, 0.5f, 0.5f);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-0.5f, -0.5f, 0.5f);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(0.5f, -0.5f, 0.5f);
 			//left
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(scale, -scale, scale);
-			gl.glVertex3f(scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.0f);	gl.glVertex3f(0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(0.5f, 0.5f, 0.5f);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(0.5f, -0.5f, 0.5f);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(0.5f, -0.5f, -0.5f);
 			//rigth
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, scale);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(-0.5f, 0.5f, 0.5f);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(-0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(-0.5f, -0.5f, -0.5f);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-0.5f, -0.5f, 0.5f);
 			//top
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.0f, 0.0f);	gl.glVertex3f(-0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-0.5f, 0.5f, 0.5f);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(0.5f, 0.5f, 0.5f);
 			//botton
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, scale);
-			gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(0.5f, -0.5f, -0.5f);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-0.5f, -0.5f, -0.5f);
+				gl.glTexCoord2f(0.0f, 0.75f);	gl.glVertex3f(-0.5f, -0.5f, 0.5f);
 			//back
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(0.5f, 0.5f, -0.5f);
+				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(0.5f, -0.5f, -0.5f);
+				gl.glTexCoord2f(0.5f, 0.75f);	gl.glVertex3f(-0.5f, -0.5f, -0.5f);
 		gl.glEnd();
 		
-		//draw outline
-		gl.glColor3f(0.0f, 0.0f, 0.0f);
-		//front
-		gl.glBegin(GL2.GL_LINE_LOOP);
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(-scale, -scale, scale);
-			gl.glVertex3f(scale, -scale, scale);
-		gl.glEnd();
-		//back
-		gl.glBegin(GL2.GL_LINE_LOOP);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-		gl.glEnd();
-		//sides
-		gl.glBegin(GL2.GL_LINES);
-			gl.glVertex3f(-scale, scale, -scale);
-			gl.glVertex3f(-scale, scale, scale);
-			gl.glVertex3f(scale, scale, -scale);
-			gl.glVertex3f(scale, scale, scale);
-			gl.glVertex3f(scale, -scale, -scale);
-			gl.glVertex3f(scale, -scale, scale);
-			gl.glVertex3f(-scale, -scale, -scale);
-			gl.glVertex3f(-scale, -scale, scale);
-		gl.glEnd();
+		// //draw outline
+		// gl.glColor3f(0.0f, 0.0f, 0.0f);
+		// //front
+		// gl.glBegin(GL2.GL_LINE_LOOP);
+			// gl.glVertex3f(scale, scale, scale);
+			// gl.glVertex3f(-scale, scale, scale);
+			// gl.glVertex3f(-scale, -scale, scale);
+			// gl.glVertex3f(scale, -scale, scale);
+		// gl.glEnd();
+		// //back
+		// gl.glBegin(GL2.GL_LINE_LOOP);
+			// gl.glVertex3f(-scale, scale, -scale);
+			// gl.glVertex3f(scale, scale, -scale);
+			// gl.glVertex3f(scale, -scale, -scale);
+			// gl.glVertex3f(-scale, -scale, -scale);
+		// gl.glEnd();
+		// //sides
+		// gl.glBegin(GL2.GL_LINES);
+			// gl.glVertex3f(-scale, scale, -scale);
+			// gl.glVertex3f(-scale, scale, scale);
+			// gl.glVertex3f(scale, scale, -scale);
+			// gl.glVertex3f(scale, scale, scale);
+			// gl.glVertex3f(scale, -scale, -scale);
+			// gl.glVertex3f(scale, -scale, scale);
+			// gl.glVertex3f(-scale, -scale, -scale);
+			// gl.glVertex3f(-scale, -scale, scale);
+		// gl.glEnd();
 	}
 	
-	private void drawBlock(GL2 gl, int type, boolean drawPositiveX, boolean drawNegativeX, boolean drawPositiveY, boolean drawNegativeY, boolean drawPositiveZ, boolean drawNegativeZ) {
+	private void drawBlock(GL2 gl, int type, boolean drawPositiveX, boolean drawNegativeX, boolean drawPositiveY, boolean drawNegativeY, boolean drawPositiveZ, boolean drawNegativeZ, float x, float y, float z) {
 		float scale = 0.5f;
 		//drawBlock
 		Random rand = new Random();
 		
-		//select color
-		// switch (type) {
-			// case 1:		gl.glColor3f(0.1f, 0.7f, 0.0f);	break;
-			
-			// case 2:		gl.glColor3f(0.5f, 0.5f, 0.5f);	break;
-			
-			// case 3:		gl.glColor3f(0.5f, 0.5f, 0.3f);	break;
-			
-			// case 4:		gl.glColor3f(0.3f, 0.3f, 0.15f);	break;
-			
-			// case 5:		gl.glColor3f(0.0f, 0.3f, 0.0f);	break;
-			
-			// default: 	break;
-		// }
-		
-		
-		//gl.glColor3f(1.0f, 1.0f, 1.0f);
-		
-		//if (type == 4) System.out.println("test");
+		//select texture
 		
 		if (lastTexture != type && texture.length > type && texture[type] != null) {
 			texture[type].enable(gl);
@@ -414,45 +425,45 @@ class Renderer extends GLCanvas implements GLEventListener {
 			//gl.glNormal3f(-1.0f,0.0f,0.0f);
 			//front
 			if (drawPositiveZ) {
-				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, scale, scale);
-				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
-				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale, -scale, scale);
-				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale + x, scale + y, scale + z);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale + x, scale + y, scale + z);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale + x, -scale + y, scale + z);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale + x, -scale + y, scale + z);
 			}
 			//left
 			if (drawPositiveX) {
-				gl.glTexCoord2f(0.5f, 0.0f);	gl.glVertex3f(scale, scale, -scale);
-				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale, scale, scale);
-				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, -scale, scale);
-				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.0f);	gl.glVertex3f(scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale + x, scale + y, scale + z);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale + x, -scale + y, scale + z);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(scale + x, -scale + y, -scale + z);
 			}
 			//rigth
 			if (drawNegativeX) {
-				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
-				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(-scale, scale, -scale);
-				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(-scale, -scale, -scale);
-				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale, -scale, scale);
+				gl.glTexCoord2f(0.5f, 0.25f);	gl.glVertex3f(-scale + x, scale + y, scale + z);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(-scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(-scale + x, -scale + y, -scale + z);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale + x, -scale + y, scale + z);
 			}
 			//top
 			if (drawPositiveY) {
-				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale, scale, -scale);
-				gl.glTexCoord2f(0.0f, 0.0f);	gl.glVertex3f(-scale, scale, -scale);
-				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale, scale, scale);
-				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale, scale, scale);
+				gl.glTexCoord2f(0.25f, 0.0f);	gl.glVertex3f(scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.0f, 0.0f);	gl.glVertex3f(-scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.0f, 0.25f);	gl.glVertex3f(-scale + x, scale + y, scale + z);
+				gl.glTexCoord2f(0.25f, 0.25f);	gl.glVertex3f(scale + x, scale + y, scale + z);
 			}
 			//botton
 			if (drawNegativeY) {
-				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, -scale, -scale);
-				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale, -scale, -scale);
-				gl.glTexCoord2f(0.0f, 0.75f);	gl.glVertex3f(-scale, -scale, scale);
-				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale, -scale, scale);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale + x, -scale + y, -scale + z);
+				gl.glTexCoord2f(0.0f, 0.5f);	gl.glVertex3f(-scale + x, -scale + y, -scale + z);
+				gl.glTexCoord2f(0.0f, 0.75f);	gl.glVertex3f(-scale + x, -scale + y, scale + z);
+				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale + x, -scale + y, scale + z);
 			}
 			//back
 			if (drawNegativeZ) {
-				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale, scale, -scale);
-				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale, scale, -scale);
-				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale, -scale, -scale);
-				gl.glTexCoord2f(0.5f, 0.75f);	gl.glVertex3f(-scale, -scale, -scale);
+				gl.glTexCoord2f(0.5f, 0.5f);	gl.glVertex3f(-scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.25f, 0.5f);	gl.glVertex3f(scale + x, scale + y, -scale + z);
+				gl.glTexCoord2f(0.25f, 0.75f);	gl.glVertex3f(scale + x, -scale + y, -scale + z);
+				gl.glTexCoord2f(0.5f, 0.75f);	gl.glVertex3f(-scale + x, -scale + y, -scale + z);
 			}
 		gl.glEnd();
 		
@@ -771,11 +782,11 @@ class Player {
 		
 		//check if posible to move player
 		if (this.speedX > 0.0f && 
-		localMap.getBlock(Math.round(x + 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
-		localMap.getBlock(Math.round(x + 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0 ||
+		localMap.getBlock(Math.round(x + 0.2f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
+		localMap.getBlock(Math.round(x + 0.2f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0 ||
 		this.speedX < 0.0f && 
-		localMap.getBlock(Math.round(x - 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
-		localMap.getBlock(Math.round(x - 0.15f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0)
+		localMap.getBlock(Math.round(x - 0.2f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 0.49f), Math.round(z)) == 0 &&
+		localMap.getBlock(Math.round(x - 0.2f + this.speedX * ((float) deltaT/16600.0f)), Math.round(y + 1.49f), Math.round(z)) == 0)
 		x += this.speedX;
 		
 		if ((this.speedY < 0.0f && 
